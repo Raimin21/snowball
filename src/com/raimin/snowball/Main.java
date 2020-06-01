@@ -39,93 +39,43 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.projectiles.ProjectileSource;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.ScoreboardManager;
 
 public class Main extends JavaPlugin implements Listener {
     
     public static Main instance;
-    public Scoreboard board;
-    
     boolean propulsion = true;
 
     @Override 
     public void onEnable(){
         instance = this;
         
-        setupScoreboards();
         getServer().getPluginManager().registerEvents(this, this);
-        
-        //this.getCommand("Comandoxd").setExecutor(new Comando(this));
-        //this.getServer().getPluginManager().registerEvents(new PlayerListener(instance), instance);
-        this.getLogger().info("El plugin ha sido cargado");
-    }
-    
-    public void setupScoreboards(){
-        ScoreboardManager manager = Bukkit.getScoreboardManager();
-        board = manager.getNewScoreboard();
-        
-        Objective objetivo = board.registerNewObjective("bloques", "dummy");
-        objetivo.setDisplayName("Bloques Rotos");
-        objetivo.setDisplaySlot(DisplaySlot.SIDEBAR);
+        this.getServer().getPluginManager().registerEvents(new chat(this), this);
+        this.getServer().getPluginManager().registerEvents(new scoreboard(this), this);
+        this.getServer().getPluginManager().registerEvents(new bloques(this), this);
+        this.getLogger().info("§a§lSnowBall ha sido completamente cargado");
     }
     
     @Override 
     public void onDisable(){
-        this.getLogger().info("El plugin ha sido descargado");
+        this.getLogger().info("§c§lSnowBall ha sido completamente descargado");
     }
     
-    private HashMap<Player, Integer> bloquesRotos = new HashMap<>();
-    @EventHandler
-    public void onBreak (BlockBreakEvent e) {
-        int bloques = 0;
-        if (bloquesRotos.containsKey(e.getPlayer())){
-            bloques = bloquesRotos.get(e.getPlayer());
-        }
-        bloques++;
-        bloquesRotos.put(e.getPlayer(), bloques);
-        board.getObjective(DisplaySlot.SIDEBAR).getScore(e.getPlayer().getName()).setScore(bloques);
-    }
-
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent e) {
 	if ((e.getDamager() instanceof Snowball)) {
         	e.setDamage(e.getDamage() + 10);
                 this.getLogger().info("PLAYER ESTÁ SIENDO DAÑADO CON UNA SNOWBALL");
-                int bolasAcertadas = 0;
-                bolasAcertadas++;
-                //loquesRotos.put((Player) e.getDamager(), bolasAcertadas);
-                //board.getObjective(DisplaySlot.SIDEBAR).getScore(e.getDamager().getName()).setScore(bolasAcertadas);
-	}
-
-}
-
+        }
+    }
     
     @EventHandler
     public void onJoin(PlayerJoinEvent e){
-        e.getPlayer().setScoreboard(board);
         Player p = e.getPlayer();
         p.teleport(new Location(p.getWorld(),751 ,47 ,1369), PlayerTeleportEvent.TeleportCause.PLUGIN);
         e.setJoinMessage("§3¡§b" + e.getPlayer().getName() + "§3 ha entrado!");
-        
         p.sendTitle("§bBienvenidx a SnowBall II", "§f§odesigned by DixiMax & redeveloped by Raimin21", 30, 20, 30);
-        
         dar(p);
-    }
-    
-    public void dar(Player p){
-        ItemStack snowball = new ItemStack(Material.SNOWBALL, 1);
-        ItemStack slimeball = new ItemStack(Material.SLIME_BALL, 1);
-        ItemStack clock = new ItemStack(Material.CLOCK);
-        ItemStack bloques = new ItemStack(Material.SNOW_BLOCK, 16);
-        ItemMeta im = slimeball.getItemMeta();
-        im.setDisplayName("vida");
-        p.getInventory().setItem(0, snowball);
-        p.getInventory().setItem(3, bloques);
-        p.getInventory().setItem(5, slimeball);
-        p.getInventory().setItem(8, clock);
     }
     
     @EventHandler
@@ -133,7 +83,6 @@ public class Main extends JavaPlugin implements Listener {
         Player p = event.getPlayer();
         Action action = event.getAction();
         ItemStack item = event.getItem();
-
         if (action.equals(Action.RIGHT_CLICK_AIR) || action.equals(Action.RIGHT_CLICK_BLOCK)) {
             if (item != null && item.getType() == Material.SLIME_BALL) {
                 if (propulsion == true) {
@@ -144,11 +93,9 @@ public class Main extends JavaPlugin implements Listener {
                     propulsion = true;
                 } else {
                     p.sendMessage("§cDebes esperar para de usar este objeto de nuevo :o");
-                }
-                
-            }
+                }   
+            }   
         }
-        
         if (action.equals(Action.RIGHT_CLICK_AIR) || action.equals(Action.RIGHT_CLICK_BLOCK)) {
             if (item != null && item.getType() == Material.SNOWBALL) {
                 ItemStack snowball = new ItemStack(Material.SNOWBALL);
@@ -167,6 +114,35 @@ public class Main extends JavaPlugin implements Listener {
         if(event.getEntity() instanceof Player && event.getCause() == DamageCause.FALL)
              event.setCancelled(true);
     }    
+        
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent e) {
+        e.setRespawnLocation(new Location(e.getPlayer().getWorld(), 751 ,47 ,1369));
+        Player p = e.getPlayer();
+        dar(p);
+    }
+     
+    
+    @EventHandler
+    public void onHungerDeplete(FoodLevelChangeEvent e) {
+        e.setCancelled(true);
+        e.setFoodLevel(20);
+   }
+    
+    // ----------------- VOIDS -----------------
+    
+    public void dar(Player p){
+        ItemStack snowball = new ItemStack(Material.SNOWBALL, 1);
+        ItemStack slimeball = new ItemStack(Material.SLIME_BALL, 1);
+        ItemStack clock = new ItemStack(Material.CLOCK);
+        ItemStack bloques = new ItemStack(Material.SNOW_BLOCK, 16);
+        ItemMeta im = slimeball.getItemMeta();
+        im.setDisplayName("vida");
+        p.getInventory().setItem(0, snowball);
+        p.getInventory().setItem(3, bloques);
+        p.getInventory().setItem(5, slimeball);
+        p.getInventory().setItem(8, clock);
+    }
     
     @EventHandler
     public void bolas (ProjectileLaunchEvent e){
@@ -188,30 +164,4 @@ public class Main extends JavaPlugin implements Listener {
             p.sendMessage("§eAmigo/a no puedes usar eso ¡ya tienes mucha vida!");
         }
     }
-    @EventHandler
-    public void onPlayerRespawn(PlayerRespawnEvent e) {
-        e.setRespawnLocation(new Location(e.getPlayer().getWorld(), 751 ,47 ,1369));
-        e.getPlayer().setScoreboard(board);
-        Player p = e.getPlayer();
-        dar(p);
-    }
-    
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args){
-        return true;
-    }
- 
-    //ESTO ESTÁ SIN TERMINAR (REMPLAZAR LOS BLOQUES)
-    public void onBlockPlace(BlockPlaceEvent e){
-       // e.getBlock().getX()
-       Block block = (Block) e.getBlock();
-       //Material material = block.getType();
-       Player p = e.getPlayer();
-    }
-    //HASTA AQUÍ adasdasd
-    
-    @EventHandler
-    public void onHungerDeplete(FoodLevelChangeEvent e) {
-        e.setCancelled(true);
-        e.setFoodLevel(20);
-   }
 }
